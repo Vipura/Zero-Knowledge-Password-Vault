@@ -27,21 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final dbService = DatabaseService.instance;
       List<int>? storedSalt = await dbService.getSalt();
       
-      if (storedSalt == null) {
-        // FIRST TIME SETUP
-        storedSalt = _cryptoService.generateSalt();
-        await dbService.saveSalt(storedSalt);
-        final derivedKey = await _cryptoService.deriveKey(_passwordController.text, storedSalt);
-        
-        // Save Master Validation Target completely securely 
-        final verificationBox = await _cryptoService.encryptPassword("ZK_VAULT_VALID", derivedKey);
-        await dbService.saveConfig('verify_ciphertext', base64Encode(verificationBox.cipherText));
-        await dbService.saveConfig('verify_nonce', base64Encode(verificationBox.nonce));
-        await dbService.saveConfig('verify_mac', base64Encode(verificationBox.mac.bytes));
-        
-        widget.sessionManager.unlock(derivedKey);
-      } else {
-        // UNLOCK FLOW
+      if (storedSalt != null) {
         final derivedKey = await _cryptoService.deriveKey(_passwordController.text, storedSalt);
         
         final ciphertext = await dbService.getConfig('verify_ciphertext');
@@ -68,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -81,9 +67,9 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.security, size: 80, color: Colors.deepPurpleAccent),
+              const Icon(Icons.lock, size: 80, color: Colors.deepPurpleAccent),
               const SizedBox(height: 20),
-              const Text('Zero-Knowledge Vault', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text('Welcome Back', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 40),
               TextField(
                 controller: _passwordController,
@@ -95,13 +81,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 onSubmitted: (_) => _unlock(),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
               _isLoading
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
                       onPressed: _unlock,
-                      style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
-                      child: const Text('Unlock / Setup Vault'),
+                      style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(55)),
+                      child: const Text('Unlock Vault'),
                     ),
             ],
           ),
