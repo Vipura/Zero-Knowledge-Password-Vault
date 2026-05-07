@@ -3,9 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:cryptography/cryptography.dart';
 import '../services/crypto_service.dart';
 import '../services/database_service.dart';
+import '../services/password_analyzer.dart';
+import '../services/password_generator.dart';
 import '../models/password_entry.dart';
 import '../main.dart';
 import 'add_password_screen.dart';
+
+class DecryptedEntry {
+  final PasswordEntry entry;
+  final String plaintext;
+  final bool isWeak;
+  DecryptedEntry(this.entry, this.plaintext, this.isWeak);
+}
 
 class HomeScreen extends StatefulWidget {
   final SessionManager sessionManager;
@@ -18,58 +27,79 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _databaseService = DatabaseService.instance;
   final _cryptoService = CryptoService();
-  List<PasswordEntry> _entries = [];
+  List<DecryptedEntry> _decryptedEntries = [];
   bool _isLoading = true;
+  bool _showWeakOnly = false;
+
+  final TextEditingController _genLengthController = TextEditingController(text: "16");
+  String _generatedPassword = "";
 
   @override
   void initState() {
     super.initState();
-    _loadEntries();
+    _loadAndDecryptEntries();
   }
 
-  Future<void> _loadEntries() async {
+  Future<void> _loadAndDecryptEntries() async {
     setState(() => _isLoading = true);
-    _entries = await _databaseService.readAllEntries();
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _showPassword(PasswordEntry entry) async {
-    try {
-      final box = SecretBox(
-        base64Decode(entry.ciphertext),
-        nonce: base64Decode(entry.nonce),
-        mac: Mac(base64Decode(entry.mac)),
-      );
-      final plaintext = await _cryptoService.decryptPassword(box, widget.sessionManager.masterKey!);
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(entry.title),
-            content: SelectableText(plaintext),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
+    final rawEntries = await _databaseService.readAllEntries();
+    List<DecryptedEntry> decoded = [];
+    
+    for (var entry in rawEntries) {
+      try {
+        final box = SecretBox(
+          base64Decode(entry.ciphertext),
+          nonce: base64Decode(entry.nonce),
+          mac: Mac(base64Decode(entry.mac)),
         );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to decrypt password.')));
+        final plaintext = await _cryptoService.decryptPassword(box, widget.sessionManager.masterKey!);
+        final isWeak = PasswordAnalyzer.isWeak(plaintext);
+        decoded.add(DecryptedEntry(entry, plaintext, isWeak));
+      } catch (_) {
+        // Skip decryption failures silently for UI rendering scope
       }
     }
+    
+    setState(() {
+      _decryptedEntries = decoded;
+      _isLoading = false;
+    });
+  }
+
+  void _generateInfinitePassword() {
+    int length = int.tryParse(_genLengthController.text) ?? 16;
+    setState(() {
+      _generatedPassword = PasswordGenerator.generate(length: length);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final weakCount = _decryptedEntries.where((e) => e.isWeak).length;
+    final displayList = _showWeakOnly 
+      ? _decryptedEntries.where((e) => e.isWeak).toList() 
+      : _decryptedEntries;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vault'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Vault'),
+            Text('Total Apps/Titles: ${_decryptedEntries.length}', style: const TextStyle(fontSize: 12)),
+          ],
+        ),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: TextButton.icon(
+              icon: const Icon(Icons.warning_amber, color: Colors.orange),
+              label: Text('Weak: $weakCount', style: const TextStyle(color: Colors.orange)),
+              onPressed: () {
+                setState(() => _showWeakOnly = !_showWeakOnly);
+              },
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.lock),
             tooltip: 'Lock Vault',
@@ -77,21 +107,75 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      drawer: Drawer(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Password Generator', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _genLengthController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Character Amount',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _generateInfinitePassword,
+                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(45)),
+                  child: const Text('Generate Password'),
+                ),
+                const SizedBox(height: 30),
+                if (_generatedPassword.isNotEmpty) ...[
+                  const Text('Generated:', style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    _generatedPassword, 
+                    style: const TextStyle(fontSize: 18, fontFamily: 'monospace', color: Colors.greenAccent)
+                  ),
+                ]
+              ],
+            ),
+          ),
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _entries.isEmpty
-              ? const Center(child: Text('No passwords stored yet.'))
+          : displayList.isEmpty
+              ? Center(child: Text(_showWeakOnly ? 'No weak passwords found!' : 'No passwords stored yet.'))
               : ListView.builder(
-                  itemCount: _entries.length,
+                  itemCount: displayList.length,
                   itemBuilder: (context, index) {
-                    final entry = _entries[index];
+                    final item = displayList[index];
                     return ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.vpn_key)),
-                      title: Text(entry.title),
-                      subtitle: Text(entry.username),
+                      leading: CircleAvatar(
+                        backgroundColor: item.isWeak ? Colors.orange.withOpacity(0.3) : null,
+                        child: Icon(Icons.vpn_key, color: item.isWeak ? Colors.orange : Colors.white),
+                      ),
+                      title: Text(item.entry.title),
+                      subtitle: Text(item.entry.username),
                       trailing: IconButton(
                         icon: const Icon(Icons.visibility),
-                        onPressed: () => _showPassword(entry),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(item.entry.title),
+                              content: SelectableText(item.plaintext),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
@@ -104,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context) => AddPasswordScreen(sessionManager: widget.sessionManager),
             ),
           );
-          _loadEntries();
+          _loadAndDecryptEntries();
         },
         child: const Icon(Icons.add),
       ),
