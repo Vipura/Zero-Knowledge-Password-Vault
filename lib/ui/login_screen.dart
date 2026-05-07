@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:cryptography/cryptography.dart';
 import '../services/crypto_service.dart';
 import '../services/database_service.dart';
 import '../main.dart';
@@ -25,15 +27,46 @@ class _LoginScreenState extends State<LoginScreen> {
       final dbService = DatabaseService.instance;
       List<int>? storedSalt = await dbService.getSalt();
       
-      // If no salt exists, this is the first setup.
       if (storedSalt == null) {
+        // FIRST TIME SETUP
         storedSalt = _cryptoService.generateSalt();
         await dbService.saveSalt(storedSalt);
+        final derivedKey = await _cryptoService.deriveKey(_passwordController.text, storedSalt);
+        
+        // Save Master Validation Target completely securely 
+        final verificationBox = await _cryptoService.encryptPassword("ZK_VAULT_VALID", derivedKey);
+        await dbService.saveConfig('verify_ciphertext', base64Encode(verificationBox.cipherText));
+        await dbService.saveConfig('verify_nonce', base64Encode(verificationBox.nonce));
+        await dbService.saveConfig('verify_mac', base64Encode(verificationBox.mac.bytes));
+        
+        widget.sessionManager.unlock(derivedKey);
+      } else {
+        // UNLOCK FLOW
+        final derivedKey = await _cryptoService.deriveKey(_passwordController.text, storedSalt);
+        
+        final ciphertext = await dbService.getConfig('verify_ciphertext');
+        final nonce = await dbService.getConfig('verify_nonce');
+        final mac = await dbService.getConfig('verify_mac');
+        
+        if (ciphertext != null && nonce != null && mac != null) {
+          final box = SecretBox(
+            base64Decode(ciphertext),
+            nonce: base64Decode(nonce),
+            mac: Mac(base64Decode(mac)),
+          );
+          
+          try {
+            final verifyText = await _cryptoService.decryptPassword(box, derivedKey);
+            if (verifyText == "ZK_VAULT_VALID") {
+              widget.sessionManager.unlock(derivedKey);
+            } else {
+              throw Exception('Invalid password validation payload.');
+            }
+          } catch (_) {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Incorrect Master Password!')));
+          }
+        }
       }
-
-      // Security Note: Derive the SecretKey purely in memory using PBKDF2 without saving the Master Password
-      final derivedKey = await _cryptoService.deriveKey(_passwordController.text, storedSalt);
-      widget.sessionManager.unlock(derivedKey);
     } finally {
       setState(() => _isLoading = false);
     }
