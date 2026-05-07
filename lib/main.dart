@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cryptography/cryptography.dart';
+import 'ui/welcome_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/home_screen.dart';
+import 'services/database_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ZeroKnowledgeVaultApp());
+  final isSetup = await DatabaseService.instance.getSalt() != null;
+  runApp(PasswordVaultApp(isSetup: isSetup));
 }
 
 class SessionManager extends ChangeNotifier {
@@ -21,14 +24,12 @@ class SessionManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Security Note: Clears the key from volatile memory to prevent dumping attacks.
   void lock() {
     _masterKey = null;
     notifyListeners();
   }
 
   void onBackground() {
-    // Security Note: Wipe the key after 30 seconds of inactivity in background.
     _backgroundTimer?.cancel();
     _backgroundTimer = Timer(const Duration(seconds: 30), () {
       lock();
@@ -40,14 +41,15 @@ class SessionManager extends ChangeNotifier {
   }
 }
 
-class ZeroKnowledgeVaultApp extends StatefulWidget {
-  const ZeroKnowledgeVaultApp({super.key});
+class PasswordVaultApp extends StatefulWidget {
+  final bool isSetup;
+  const PasswordVaultApp({super.key, required this.isSetup});
 
   @override
-  State<ZeroKnowledgeVaultApp> createState() => _ZeroKnowledgeVaultAppState();
+  State<PasswordVaultApp> createState() => _PasswordVaultAppState();
 }
 
-class _ZeroKnowledgeVaultAppState extends State<ZeroKnowledgeVaultApp> with WidgetsBindingObserver {
+class _PasswordVaultAppState extends State<PasswordVaultApp> with WidgetsBindingObserver {
   final SessionManager _sessionManager = SessionManager();
 
   @override
@@ -77,13 +79,13 @@ class _ZeroKnowledgeVaultAppState extends State<ZeroKnowledgeVaultApp> with Widg
       listenable: _sessionManager,
       builder: (context, child) {
         return MaterialApp(
-          title: 'ZK Vault',
+          title: 'Password Vault',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.dark),
             useMaterial3: true,
           ),
           home: _sessionManager.isLocked
-              ? LoginScreen(sessionManager: _sessionManager)
+              ? (widget.isSetup ? LoginScreen(sessionManager: _sessionManager) : const WelcomeScreen())
               : HomeScreen(sessionManager: _sessionManager),
         );
       },
