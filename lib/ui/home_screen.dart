@@ -6,6 +6,7 @@ import '../services/database_service.dart';
 import '../services/password_analyzer.dart';
 import '../services/password_generator.dart';
 import '../models/password_entry.dart';
+import '../utils/app_icons.dart';
 import '../main.dart';
 import 'add_password_screen.dart';
 
@@ -73,6 +74,91 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _showItemDetails(DecryptedEntry item) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(AppIconMapper.getIconFor(item.entry.title), size: 30),
+              const SizedBox(width: 10),
+              Expanded(child: Text(item.entry.title, style: const TextStyle(fontWeight: FontWeight.bold))),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Username:', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              SelectableText(item.entry.username, style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 12),
+              const Text('Password:', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              SelectableText(item.plaintext, style: const TextStyle(fontSize: 16)),
+              if (item.isWeak) ...[
+                const SizedBox(height: 16),
+                const Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.orange, size: 16),
+                    SizedBox(width: 6),
+                    Text('Weak Password', style: TextStyle(color: Colors.orange)),
+                  ],
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _editEntry(item);
+              },
+              child: const Text('Edit'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _databaseService.delete(item.entry.id!);
+                if (mounted) Navigator.pop(context);
+                _loadAndDecryptEntries();
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack).value,
+          child: child,
+        );
+      },
+    );
+  }
+
+  void _editEntry(DecryptedEntry item) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddPasswordScreen(
+          sessionManager: widget.sessionManager,
+          entryToEdit: item.entry,
+          initialPlaintext: item.plaintext,
+        ),
+      ),
+    );
+    if (result == true) {
+      _loadAndDecryptEntries();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final weakCount = _decryptedEntries.where((e) => e.isWeak).length;
@@ -85,8 +171,8 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Vault'),
-            Text('Total Apps/Titles: ${_decryptedEntries.length}', style: const TextStyle(fontSize: 12)),
+            const Text('Password Vault'),
+            Text('Total Apps: ${_decryptedEntries.length}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
         actions: [
@@ -120,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _genLengthController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Character Amount',
+                    labelText: 'Length',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -154,41 +240,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     final item = displayList[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: item.isWeak ? Colors.orange.withOpacity(0.3) : null,
-                        child: Icon(Icons.vpn_key, color: item.isWeak ? Colors.orange : Colors.white),
+                        backgroundColor: item.isWeak ? Colors.orange.withOpacity(0.3) : Theme.of(context).colorScheme.primaryContainer,
+                        child: Icon(AppIconMapper.getIconFor(item.entry.title), color: item.isWeak ? Colors.orange : Colors.white),
                       ),
                       title: Text(item.entry.title),
                       subtitle: Text(item.entry.username),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.visibility),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text(item.entry.title),
-                              content: SelectableText(item.plaintext),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Close'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                      onTap: () => _showItemDetails(item),
                     );
                   },
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.push(
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => AddPasswordScreen(sessionManager: widget.sessionManager),
             ),
           );
-          _loadAndDecryptEntries();
+          if (result == true) {
+            _loadAndDecryptEntries();
+          }
         },
         child: const Icon(Icons.add),
       ),
