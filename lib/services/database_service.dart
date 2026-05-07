@@ -27,14 +27,12 @@ class DatabaseService {
   }
 
   Future<void> _createDB(Database db, int version) async {
-    // Security Note: We store the Salt to derive the key but NEVER the Master Password or the Key itself.
     await db.execute('''
       CREATE TABLE config (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
       )
     ''');
-
     await db.execute('''
       CREATE TABLE vault (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,6 +86,11 @@ class DatabaseService {
     final db = await instance.database;
     final result = await db.query('vault', orderBy: 'title ASC');
     return result.map((map) => PasswordEntry.fromMap(map)).toList();
+  }
+
+  Future<int> update(PasswordEntry entry) async {
+    final db = await instance.database;
+    return await db.update('vault', entry.toMap(), where: 'id = ?', whereArgs: [entry.id]);
   }
 
   Future<int> delete(int id) async {
