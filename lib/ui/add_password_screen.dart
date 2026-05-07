@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/crypto_service.dart';
 import '../services/database_service.dart';
 import '../services/password_generator.dart';
+import '../services/password_analyzer.dart';
 import '../models/password_entry.dart';
 import '../main.dart';
 
@@ -20,16 +21,30 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
   final _passwordController = TextEditingController();
   final _cryptoService = CryptoService();
   final _databaseService = DatabaseService.instance;
+  bool _isPasswordVisible = false;
 
   void _generatePassword() {
     final newPassword = PasswordGenerator.generate();
     setState(() {
       _passwordController.text = newPassword;
+      _isPasswordVisible = true;
     });
   }
 
   void _save() async {
     if (_titleController.text.isEmpty || _passwordController.text.isEmpty) return;
+
+    if (PasswordAnalyzer.isWeak(_passwordController.text)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Warning: This password is weak! Consider generating a stronger one.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          )
+        );
+      }
+    }
 
     final secretBox = await _cryptoService.encryptPassword(
       _passwordController.text,
@@ -73,8 +88,14 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                 Expanded(
                   child: TextField(
                     controller: _passwordController,
-                    decoration: const InputDecoration(labelText: 'Password'),
-                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                      ),
+                    ),
+                    obscureText: !_isPasswordVisible,
                   ),
                 ),
                 IconButton(
