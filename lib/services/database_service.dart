@@ -55,9 +55,19 @@ class DatabaseService {
   Future<List<int>?> getSalt() async {
     final db = await instance.database;
     final results = await db.query('config', where: 'key = ?', whereArgs: ['app_salt']);
-    if (results.isNotEmpty) {
-      return base64Decode(results.first['value'] as String);
-    }
+    if (results.isNotEmpty) return base64Decode(results.first['value'] as String);
+    return null;
+  }
+
+  Future<void> saveConfig(String key, String value) async {
+    final db = await instance.database;
+    await db.insert('config', {'key': key, 'value': value}, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<String?> getConfig(String key) async {
+    final db = await instance.database;
+    final results = await db.query('config', where: 'key = ?', whereArgs: [key]);
+    if (results.isNotEmpty) return results.first['value'] as String;
     return null;
   }
 
