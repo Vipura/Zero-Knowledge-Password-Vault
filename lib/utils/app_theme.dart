@@ -47,3 +47,42 @@ class AppColors {
 
   // Gradient
   static const LinearGradient cyanGradient = LinearGradient(
+    colors: [Color(0xFF06B6D4), Color(0xFF8B5CF6)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient cardGradient = LinearGradient(
+    colors: [Color(0xFF111827), Color(0xFF0F172A)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+}
+
+/// Centralized text styles.
+class AppTextStyles {
+  AppTextStyles._();
+
+  static TextStyle get heading1 => GoogleFonts.inter(
+        fontSize: 32,
+        fontWeight: FontWeight.w800,
+        color: AppColors.textPrimary,
+        letterSpacing: 2.0,
+      );
+
+  static TextStyle get heading2 => GoogleFonts.inter(
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        letterSpacing: 1.5,
+      );
+
+  static TextStyle get heading3 => GoogleFonts.inter(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      );
+
+  static TextStyle get body => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
