@@ -164,3 +164,42 @@ class AppDecorations {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: AppColors.surfaceBorder),
       ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+    );
+  }
+
+  /// Cyan gradient outlined button style.
+  static ButtonStyle get gradientOutlineButton => OutlinedButton.styleFrom(
+        side: const BorderSide(color: AppColors.primary, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        foregroundColor: AppColors.primary,
+      );
+
+  /// Build the app-wide ThemeData.
+  static ThemeData buildTheme() {
+    return ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.background,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primary,
+        secondary: AppColors.accent,
+        surface: AppColors.surface,
+        error: AppColors.error,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        titleTextStyle: AppTextStyles.heading3,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.surfaceBorder),
+        ),
