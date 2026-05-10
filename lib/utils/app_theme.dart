@@ -125,3 +125,42 @@ class AppDecorations {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.surfaceBorder, width: 1),
       );
+
+  /// Card with subtle glow effect.
+  static BoxDecoration get cardGlow => BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryGlow,
+            blurRadius: 20,
+            spreadRadius: -5,
+          ),
+        ],
+      );
+
+  /// Input field decoration.
+  static InputDecoration inputDecoration({
+    required String hintText,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+      prefixIcon: prefixIcon != null
+          ? Icon(prefixIcon, color: AppColors.textMuted, size: 20)
+          : null,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: AppColors.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.surfaceBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.surfaceBorder),
+      ),
