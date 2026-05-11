@@ -40,6 +40,10 @@ class AppIconMapper {
     'discord': AppColors.discordPurple,
     'slack': AppColors.slackPurple,
     'gmail': AppColors.gmailRed,
+  };
+
+  static List<String> get popularApps =>
+      _iconMap.keys.map((k) => k[0].toUpperCase() + k.substring(1)).toList();
 
   static IconData getIconFor(String title) {
     final lower = title.toLowerCase().trim();
@@ -47,5 +51,23 @@ class AppIconMapper {
       if (lower.contains(key)) return _iconMap[key]!;
     }
     return Icons.vpn_key;
+  }
+
+  /// Returns the brand color for a known service, or a hash-based color.
+  static Color getBrandColor(String title) {
+    final lower = title.toLowerCase().trim();
+    for (final key in _brandColors.keys) {
+      if (lower.contains(key)) return _brandColors[key]!;
+    }
+    // Hash-based fallback color
+    final hash = lower.hashCode;
+    final hue = (hash % 360).abs().toDouble();
+    return HSLColor.fromAHSL(1.0, hue, 0.6, 0.5).toColor();
+  }
+
+  /// Returns the first letter of the title for icon fallback.
+  static String getInitial(String title) {
+    if (title.isEmpty) return '?';
+    return title[0].toUpperCase();
   }
 }
