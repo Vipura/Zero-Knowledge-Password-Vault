@@ -242,3 +242,9 @@ class AppDecorations {
         contentTextStyle: AppTextStyles.body,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         behavior: SnackBarBehavior.floating,
+      ),
+      useMaterial3: true,
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+    );
+  }
+}
