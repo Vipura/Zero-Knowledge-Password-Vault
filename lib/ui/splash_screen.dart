@@ -53,3 +53,42 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _pulseController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: AnimatedBuilder(
+        animation: Listenable.merge([_pulseController, _fadeController]),
+        builder: (context, child) {
+          return Center(
+            child: Opacity(
+              opacity: _fadeAnimation.value,
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(flex: 3),
+                    // Shield icon with glow rings
+                    _buildShieldIcon(),
+                    const SizedBox(height: 32),
+                    // App name
+                    Text(
+                      'ZERO VAULT',
+                      style: AppTextStyles.heading1.copyWith(
+                        fontSize: 36,
+                        letterSpacing: 4.0,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Your Secrets. Your Eyes Only.',
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 15,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
