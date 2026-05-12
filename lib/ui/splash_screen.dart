@@ -92,3 +92,42 @@ class _SplashScreenState extends State<SplashScreen>
                         color: AppColors.textSecondary,
                         letterSpacing: 0.5,
                       ),
+                    ),
+                    const Spacer(flex: 3),
+                    // Version
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 40),
+                      child: Text(
+                        'v1.0',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildShieldIcon() {
+    return SizedBox(
+      width: 180,
+      height: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer glow ring
+          AnimatedBuilder(
+            animation: _pulseAnimation,
+            builder: (context, child) {
+              return Container(
+                width: 170,
+                height: 170,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
