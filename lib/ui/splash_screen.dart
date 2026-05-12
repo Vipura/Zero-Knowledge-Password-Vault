@@ -131,3 +131,42 @@ class _SplashScreenState extends State<SplashScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
+                    color: AppColors.primary
+                        .withValues(alpha: _pulseAnimation.value * 0.3),
+                    width: 1.5,
+                  ),
+                ),
+              );
+            },
+          ),
+          // Middle glow ring
+          AnimatedBuilder(
+            animation: _pulseAnimation,
+            builder: (context, child) {
+              return Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary
+                        .withValues(alpha: _pulseAnimation.value * 0.5),
+                    width: 1.0,
+                  ),
+                ),
+              );
+            },
+          ),
+          // Shield background with glow
+          Container(
+            width: 110,
+            height: 120,
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 40,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
