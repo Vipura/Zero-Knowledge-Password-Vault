@@ -209,3 +209,33 @@ class _ShieldPainter extends CustomPainter {
           Color(0xFF0E7490), // Darker cyan
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final w = size.width;
+    final h = size.height;
+
+    // Shield shape
+    path.moveTo(w * 0.5, 0);
+    path.quadraticBezierTo(w * 0.85, h * 0.02, w, h * 0.15);
+    path.lineTo(w, h * 0.5);
+    path.quadraticBezierTo(w * 0.95, h * 0.78, w * 0.5, h);
+    path.quadraticBezierTo(w * 0.05, h * 0.78, 0, h * 0.5);
+    path.lineTo(0, h * 0.15);
+    path.quadraticBezierTo(w * 0.15, h * 0.02, w * 0.5, 0);
+    path.close();
+
+    canvas.drawPath(path, paint);
+
+    // Border
+    final borderPaint = Paint()
+      ..color = AppColors.primary.withValues(alpha: 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ShieldPainter oldDelegate) =>
+      oldDelegate.glowOpacity != glowOpacity;
+}

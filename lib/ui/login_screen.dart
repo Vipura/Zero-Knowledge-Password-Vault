@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cryptography/cryptography.dart';
 import '../services/crypto_service.dart';
 import '../services/database_service.dart';
+import '../utils/app_theme.dart';
 import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,10 +14,16 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _cryptoService = CryptoService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  late AnimationController _animController;
+  late Animation<double> _fadeIn;
+
 
   void _unlock() async {
     if (_passwordController.text.isEmpty) return;
