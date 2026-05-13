@@ -170,3 +170,42 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ],
             ),
+            child: CustomPaint(
+              painter: _ShieldPainter(
+                glowOpacity: _pulseAnimation.value,
+              ),
+              child: const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Icon(
+                    Icons.lock,
+                    color: Color(0xFFFFD700),
+                    size: 36,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Custom painter for the shield shape.
+class _ShieldPainter extends CustomPainter {
+  final double glowOpacity;
+  _ShieldPainter({required this.glowOpacity});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF1E40AF), // Deep blue
+          Color(0xFF06B6D4), // Cyan
+          Color(0xFF0E7490), // Darker cyan
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
