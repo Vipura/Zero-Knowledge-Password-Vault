@@ -140,6 +140,45 @@ class _LoginScreenState extends State<LoginScreen>
                     prefixIcon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppColors.textMuted,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
+                  onSubmitted: (_) => _unlock(),
+                ),
+                const SizedBox(height: 12),
+
+                // Helper text
+                Text(
+                  "This password is your master password. It's\nthis your local, private key.",
+                  style: AppTextStyles.caption,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 28),
+
+                // Unlock button
+                SizedBox(
+                  width: double.infinity,
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                              color: AppColors.primary))
+                      : Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppColors.primary,
+                                Color(0xFF8B5CF6),
+                              ],
+                            ),
+                          ),
           ),
         ),
       ),
