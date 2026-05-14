@@ -101,6 +101,45 @@ class _LoginScreenState extends State<LoginScreen>
       body: FadeTransition(
         opacity: _fadeIn,
         child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 36),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 60),
+                // Title
+                Text(
+                  'UNLOCK YOUR VAULT',
+                  style: AppTextStyles.heading2.copyWith(
+                    letterSpacing: 2.0,
+                    fontSize: 22,
+                  ),
+                ),
+                const SizedBox(height: 48),
+
+                // Username/Email field
+                TextField(
+                  controller: _usernameController,
+                  style: AppTextStyles.body
+                      .copyWith(color: AppColors.textPrimary),
+                  decoration: AppDecorations.inputDecoration(
+                    hintText: 'Username / Email',
+                    prefixIcon: Icons.person_outline,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Master Password field
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  style: AppTextStyles.body
+                      .copyWith(color: AppColors.textPrimary),
+                  decoration: AppDecorations.inputDecoration(
+                    hintText: 'Master Password',
+                    prefixIcon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
           ),
         ),
       ),
