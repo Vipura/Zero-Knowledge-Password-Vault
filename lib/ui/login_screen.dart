@@ -80,6 +80,12 @@ class _LoginScreenState extends State<LoginScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Incorrect Master Password!',
+                      style: AppTextStyles.body
+                          .copyWith(color: AppColors.textPrimary)),
+                  backgroundColor: AppColors.error.withValues(alpha: 0.9),
+                ),
+              );
+            }
           }
         }
       }
@@ -91,35 +97,10 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.lock, size: 80, color: Colors.deepPurpleAccent),
-              const SizedBox(height: 20),
-              const Text('Welcome Back', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 40),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Master Password',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.password),
-                ),
-                onSubmitted: (_) => _unlock(),
-              ),
-              const SizedBox(height: 32),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _unlock,
-                      style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(55)),
-                      child: const Text('Unlock Vault'),
-                    ),
-            ],
+      backgroundColor: AppColors.background,
+      body: FadeTransition(
+        opacity: _fadeIn,
+        child: Center(
           ),
         ),
       ),
