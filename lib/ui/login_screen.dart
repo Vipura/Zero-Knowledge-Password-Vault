@@ -257,6 +257,28 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+
+                // Forgot password
+                Column(
+                  children: [
+                    Text(
+                      'Forgot Master Password?',
+                      style: AppTextStyles.label.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Recovery password to your tier recovery',
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),

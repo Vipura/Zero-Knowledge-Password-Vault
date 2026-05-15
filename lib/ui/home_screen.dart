@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cryptography/cryptography.dart';
 import '../services/crypto_service.dart';
 import '../services/database_service.dart';
 import '../services/password_analyzer.dart';
-import '../services/password_generator.dart';
 import '../models/password_entry.dart';
 import '../utils/app_icons.dart';
+import '../utils/app_theme.dart';
 import '../main.dart';
 import 'add_password_screen.dart';
 
@@ -25,15 +26,18 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final _databaseService = DatabaseService.instance;
   final _cryptoService = CryptoService();
   List<DecryptedEntry> _decryptedEntries = [];
   bool _isLoading = true;
-  bool _showWeakOnly = false;
+  int _selectedSidebarIndex = 0;
+  String _searchQuery = '';
+  final Set<int> _revealedPasswords = {};
 
-  final TextEditingController _genLengthController = TextEditingController(text: "16");
-  String _generatedPassword = "";
+  late AnimationController _fadeController;
+  late Animation<double> _fadeIn;
 
   @override
   void initState() {
