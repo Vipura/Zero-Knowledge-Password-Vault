@@ -179,6 +179,45 @@ class _LoginScreenState extends State<LoginScreen>
                               ],
                             ),
                           ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: _unlock,
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: AppColors.background.withValues(alpha: 0.85),
+                                  border: Border.all(
+                                    color: AppColors.primary,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Unlock',
+                                    style: AppTextStyles.button.copyWith(
+                                      fontSize: 17,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 36),
+
+                // Biometric unlock section
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
           ),
         ),
       ),
