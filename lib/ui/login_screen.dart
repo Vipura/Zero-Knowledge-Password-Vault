@@ -218,6 +218,45 @@ class _LoginScreenState extends State<LoginScreen>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.5)),
+                      ),
+                      child: const Icon(
+                        Icons.fingerprint,
+                        color: AppColors.primary,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Biometric Unlock',
+                      style: AppTextStyles.label.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Fingerprint & Face ID',
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                // Create Account
+                TextButton(
+                  onPressed: () {
+                    // Navigate to setup — but since user is on login,
+                    // vault is already setup. This is decorative per design.
+                  },
+                  child: Text(
+                    'Create Account',
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
           ),
         ),
       ),
