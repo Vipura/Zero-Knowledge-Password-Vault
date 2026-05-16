@@ -96,40 +96,19 @@ class _HomeScreenState extends State<HomeScreen>
   int get _securityScore {
     if (_decryptedEntries.isEmpty) return 100;
     final strong = _decryptedEntries.where((e) => !e.isWeak).length;
+    return ((strong / _decryptedEntries.length) * 100).round();
+  }
+
+  void _toggleReveal(int index) {
     setState(() {
-      _generatedPassword = PasswordGenerator.generate(length: length);
+      if (_revealedPasswords.contains(index)) {
+        _revealedPasswords.remove(index);
+      } else {
+        _revealedPasswords.add(index);
+      }
     });
   }
 
-  void _showItemDetails(DecryptedEntry item) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              Icon(AppIconMapper.getIconFor(item.entry.title), size: 30),
-              const SizedBox(width: 10),
-              Expanded(child: Text(item.entry.title, style: const TextStyle(fontWeight: FontWeight.bold))),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Username:', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              SelectableText(item.entry.username, style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 12),
-              const Text('Password:', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              SelectableText(item.plaintext, style: const TextStyle(fontSize: 16)),
-              if (item.isWeak) ...[
-                const SizedBox(height: 16),
-                const Row(
-                  children: [
                     Icon(Icons.warning, color: Colors.orange, size: 16),
                     SizedBox(width: 6),
                     Text('Weak Password', style: TextStyle(color: Colors.orange)),
