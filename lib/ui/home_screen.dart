@@ -42,14 +42,25 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeIn = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
     _loadAndDecryptEntries();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAndDecryptEntries() async {
     setState(() => _isLoading = true);
     final rawEntries = await _databaseService.readAllEntries();
     List<DecryptedEntry> decoded = [];
-    
+
     for (var entry in rawEntries) {
       try {
         final box = SecretBox(
@@ -57,22 +68,34 @@ class _HomeScreenState extends State<HomeScreen>
           nonce: base64Decode(entry.nonce),
           mac: Mac(base64Decode(entry.mac)),
         );
-        final plaintext = await _cryptoService.decryptPassword(box, widget.sessionManager.masterKey!);
+        final plaintext = await _cryptoService.decryptPassword(
+            box, widget.sessionManager.masterKey!);
         final isWeak = PasswordAnalyzer.isWeak(plaintext);
         decoded.add(DecryptedEntry(entry, plaintext, isWeak));
       } catch (_) {
-        // Skip decryption failures silently for UI rendering scope
+        // Skip decryption failures silently
       }
     }
-    
+
     setState(() {
       _decryptedEntries = decoded;
       _isLoading = false;
     });
+    _fadeController.forward(from: 0);
   }
 
-  void _generateInfinitePassword() {
-    int length = int.tryParse(_genLengthController.text) ?? 16;
+  List<DecryptedEntry> get _filteredEntries {
+    if (_searchQuery.isEmpty) return _decryptedEntries;
+    return _decryptedEntries.where((e) {
+      final q = _searchQuery.toLowerCase();
+      return e.entry.title.toLowerCase().contains(q) ||
+          e.entry.username.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  int get _securityScore {
+    if (_decryptedEntries.isEmpty) return 100;
+    final strong = _decryptedEntries.where((e) => !e.isWeak).length;
     setState(() {
       _generatedPassword = PasswordGenerator.generate(length: length);
     });
