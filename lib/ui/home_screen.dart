@@ -109,43 +109,8 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-                    Icon(Icons.warning, color: Colors.orange, size: 16),
-                    SizedBox(width: 6),
-                    Text('Weak Password', style: TextStyle(color: Colors.orange)),
-                  ],
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _editEntry(item);
-              },
-              child: const Text('Edit'),
-            ),
-            TextButton(
-              onPressed: () async {
-                await _databaseService.delete(item.entry.id!);
-                if (mounted) Navigator.pop(context);
-                _loadAndDecryptEntries();
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-      transitionBuilder: (context, anim1, anim2, child) {
-        return Transform.scale(
-          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack).value,
-          child: child,
-        );
-      },
+  void _copyPassword(String password) {
+    Clipboard.setData(ClipboardData(text: password));
     );
   }
 
