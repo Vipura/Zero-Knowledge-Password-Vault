@@ -111,6 +111,13 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _copyPassword(String password) {
     Clipboard.setData(ClipboardData(text: password));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Password copied!',
+            style: AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
+        backgroundColor: AppColors.surface,
+        duration: const Duration(seconds: 1),
+      ),
     );
   }
 
@@ -125,17 +132,39 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
-    if (result == true) {
+    if (result == true) _loadAndDecryptEntries();
+  }
+
+  void _deleteEntry(DecryptedEntry item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete ${item.entry.title}?',
+            style: AppTextStyles.heading3),
+        content: Text('This action cannot be undone.', style: AppTextStyles.body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Delete',
+                style: AppTextStyles.label.copyWith(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await _databaseService.delete(item.entry.id!);
       _loadAndDecryptEntries();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final weakCount = _decryptedEntries.where((e) => e.isWeak).length;
-    final displayList = _showWeakOnly 
-      ? _decryptedEntries.where((e) => e.isWeak).toList() 
-      : _decryptedEntries;
 
     return Scaffold(
       appBar: AppBar(
