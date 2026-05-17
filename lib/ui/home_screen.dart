@@ -165,10 +165,45 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth > 900;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Row(
+          children: [
+            // Sidebar
+            _buildSidebar(),
+            // Main content
+            Expanded(
+              child: Column(
+                children: [
+                  _buildTopBar(),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                                color: AppColors.primary))
+                        : FadeTransition(
+                            opacity: _fadeIn,
+                            child: Row(
+                              children: [
+                                // Main grid area
+                                Expanded(
+                                  flex: isWide ? 3 : 1,
+                                  child: _buildMainContent(),
+                                ),
+                                // Right passwords panel (wide only)
+                                if (isWide) ...[
+                                  Container(
+                                    width: 1,
+                                    color: AppColors.surfaceBorder,
+                                  ),
+                                  SizedBox(
+                                    width: 280,
+                                    child: _buildRightPanel(),
+                                  ),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Password Vault'),
