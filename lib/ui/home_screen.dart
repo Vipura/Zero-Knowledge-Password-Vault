@@ -204,6 +204,45 @@ class _HomeScreenState extends State<HomeScreen>
                                     width: 280,
                                     child: _buildRightPanel(),
                                   ),
+                                ],
+                              ],
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Left sidebar with icon navigation.
+  Widget _buildSidebar() {
+    final items = [
+      _SidebarItem(Icons.lock_outline, 'Vaults'),
+      _SidebarItem(Icons.folder_outlined, 'Categories'),
+      _SidebarItem(Icons.shield_outlined, 'Security\nScore'),
+      _SidebarItem(Icons.settings_outlined, 'Settings'),
+    ];
+
+    return Container(
+      width: 72,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          right: BorderSide(color: AppColors.surfaceBorder, width: 1),
+        ),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          // Logo at top
+          Container(
+            padding: const EdgeInsets.all(8),
+            child: const Icon(
+              Icons.shield,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Password Vault'),
