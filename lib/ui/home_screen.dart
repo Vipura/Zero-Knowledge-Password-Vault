@@ -321,6 +321,45 @@ class _HomeScreenState extends State<HomeScreen>
                               : AppColors.textMuted,
                         ),
                         textAlign: TextAlign.center,
+                        maxLines: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const Spacer(),
+          // Lock button
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: IconButton(
+              onPressed: () => widget.sessionManager.lock(),
+              icon: const Icon(Icons.logout, color: AppColors.textMuted, size: 20),
+              tooltip: 'Lock Vault',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Top bar with search, avatar, and add button.
+  Widget _buildTopBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border(
+          bottom: BorderSide(color: AppColors.surfaceBorder, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Search field
+          Expanded(
+            child: Container(
+              height: 40,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Password Vault'),
