@@ -243,6 +243,45 @@ class _HomeScreenState extends State<HomeScreen>
             padding: const EdgeInsets.all(8),
             child: const Icon(
               Icons.shield,
+              color: AppColors.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ...List.generate(items.length, (index) {
+            final isSelected = _selectedSidebarIndex == index;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: InkWell(
+                onTap: () => setState(() => _selectedSidebarIndex = index),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 56,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.15)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isSelected
+                        ? Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            width: 1)
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Special badge for security score
+                      if (index == 2) ...[
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Password Vault'),
