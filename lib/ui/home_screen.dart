@@ -282,6 +282,45 @@ class _HomeScreenState extends State<HomeScreen>
                               width: 28,
                               height: 28,
                               child: CircularProgressIndicator(
+                                value: _securityScore / 100,
+                                strokeWidth: 2.5,
+                                backgroundColor:
+                                    AppColors.surfaceBorder,
+                                color: _securityScore >= 70
+                                    ? AppColors.success
+                                    : _securityScore >= 40
+                                        ? AppColors.warning
+                                        : AppColors.error,
+                              ),
+                            ),
+                            Text(
+                              '$_securityScore%',
+                              style: AppTextStyles.caption.copyWith(
+                                fontSize: 7,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else
+                        Icon(
+                          items[index].icon,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textMuted,
+                          size: 22,
+                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        items[index].label,
+                        style: AppTextStyles.caption.copyWith(
+                          fontSize: 9,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textMuted,
+                        ),
+                        textAlign: TextAlign.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Password Vault'),
