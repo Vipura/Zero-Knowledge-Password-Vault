@@ -360,6 +360,45 @@ class _HomeScreenState extends State<HomeScreen>
           Expanded(
             child: Container(
               height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.surfaceBorder),
+              ),
+              child: TextField(
+                onChanged: (v) => setState(() => _searchQuery = v),
+                style:
+                    AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  hintStyle: AppTextStyles.body
+                      .copyWith(color: AppColors.textMuted),
+                  prefixIcon: const Icon(Icons.search,
+                      color: AppColors.textMuted, size: 18),
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // User avatar
+          Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppColors.cyanGradient,
+            ),
+            child: const Icon(Icons.person, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          // Add new entry button
+          _buildAddButton(),
+        ],
+      ),
+    );
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Password Vault'),
