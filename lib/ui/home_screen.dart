@@ -438,6 +438,44 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Main content area with password grid and ZK card.
+  Widget _buildMainContent() {
+    final entries = _filteredEntries;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Password cards grid
+          if (entries.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 80),
+                child: Column(
+                  children: [
+                    const Icon(Icons.lock_open,
+                        size: 64, color: AppColors.textMuted),
+                    const SizedBox(height: 16),
+                    Text('No passwords stored yet.',
+                        style: AppTextStyles.body),
+                    const SizedBox(height: 8),
+                    Text('Tap "Add New Entry" to get started.',
+                        style: AppTextStyles.caption),
+                  ],
+                ),
+              ),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final crossAxisCount = constraints.maxWidth > 800
+                    ? 3
+                    : constraints.maxWidth > 500
+                        ? 2
+                        : 1;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Password Vault'),
