@@ -399,6 +399,45 @@ class _HomeScreenState extends State<HomeScreen>
         ],
       ),
     );
+  }
+
+  Widget _buildAddButton() {
+    return InkWell(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                AddPasswordScreen(sessionManager: widget.sessionManager),
+          ),
+        );
+        if (result == true) _loadAndDecryptEntries();
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.surfaceBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.add, color: AppColors.primary, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              'Add New Entry',
+              style: AppTextStyles.label
+                  .copyWith(color: AppColors.textPrimary, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Main content area with password grid and ZK card.
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Password Vault'),
