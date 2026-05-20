@@ -476,10 +476,45 @@ class _HomeScreenState extends State<HomeScreen>
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    childAspectRatio: 1.65,
+                  ),
+                  itemCount: entries.length,
+                  itemBuilder: (context, index) =>
+                      _buildPasswordCard(entries[index], index),
+                );
+              },
+            ),
+          const SizedBox(height: 20),
+          // Zero-Knowledge Architecture card
+          _buildZeroKnowledgeCard(),
+        ],
+      ),
+    );
+  }
+
+  /// Individual password card.
+  Widget _buildPasswordCard(DecryptedEntry item, int index) {
+    final isRevealed = _revealedPasswords.contains(index);
+    final brandColor = AppIconMapper.getBrandColor(item.entry.title);
+
+    return GestureDetector(
+      onTap: () => _editEntry(item),
+      onLongPress: () => _deleteEntry(item),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.surfaceBorder),
+        ),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Password Vault'),
-            Text('Total Apps: ${_decryptedEntries.length}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            // Header row: Icon + title
           ],
         ),
         actions: [
