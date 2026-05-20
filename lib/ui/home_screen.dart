@@ -554,6 +554,45 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ],
             ),
+            const Spacer(),
+            // Username
+            Text(
+              'Username: ${item.entry.username}',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 3),
+            // Password
+            Text(
+              'Password: ${isRevealed ? item.plaintext : '••••••••'}',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            // Action buttons
+            Row(
+              children: [
+                _buildCardAction(
+                  icon: Icons.copy,
+                  label: 'Copy',
+                  color: AppColors.primary,
+                  onTap: () => _copyPassword(item.plaintext),
+                ),
+                const SizedBox(width: 12),
+                _buildCardAction(
+                  icon: isRevealed
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  label: isRevealed ? 'Hide' : 'Reveal',
+                  color: AppColors.accent,
           ],
         ),
         actions: [
