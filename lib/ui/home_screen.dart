@@ -612,6 +612,45 @@ class _HomeScreenState extends State<HomeScreen>
     return Text(
       AppIconMapper.getInitial(title),
       style: AppTextStyles.heading3.copyWith(
+        color: brandColor,
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+
+  Widget _buildCardAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Zero-Knowledge Architecture information card.
+  Widget _buildZeroKnowledgeCard() {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
