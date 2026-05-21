@@ -593,30 +593,25 @@ class _HomeScreenState extends State<HomeScreen>
                       : Icons.visibility,
                   label: isRevealed ? 'Hide' : 'Reveal',
                   color: AppColors.accent,
+                  onTap: () => _toggleReveal(index),
+                ),
+              ],
+            ),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: TextButton.icon(
-              icon: const Icon(Icons.warning_amber, color: Colors.orange),
-              label: Text('Weak: $weakCount', style: const TextStyle(color: Colors.orange)),
-              onPressed: () {
-                setState(() => _showWeakOnly = !_showWeakOnly);
-              },
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.lock),
-            tooltip: 'Lock Vault',
-            onPressed: () => widget.sessionManager.lock(),
-          ),
-        ],
       ),
-      drawer: Drawer(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+    );
+  }
+
+  Widget _buildBrandWidget(String title, Color brandColor) {
+    final icon = AppIconMapper.getIconFor(title);
+    if (icon != Icons.vpn_key) {
+      return Icon(icon, color: brandColor, size: 20);
+    }
+    // Fallback: show initial letter
+    return Text(
+      AppIconMapper.getInitial(title),
+      style: AppTextStyles.heading3.copyWith(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
