@@ -651,17 +651,40 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// Zero-Knowledge Architecture information card.
   Widget _buildZeroKnowledgeCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          // Key icon
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: AppColors.cyanGradient,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.vpn_key, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 20),
+          // Info
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Password Generator', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _genLengthController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Length',
-                    border: OutlineInputBorder(),
+                Text(
+                  'Zero-Knowledge Architecture',
+                  style: AppTextStyles.heading3.copyWith(fontSize: 15),
+                ),
+                const SizedBox(height: 10),
                   ),
                 ),
                 const SizedBox(height: 20),
