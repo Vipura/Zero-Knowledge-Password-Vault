@@ -763,6 +763,45 @@ class _HomeScreenState extends State<HomeScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: brandColor.withValues(alpha: 0.15),
+                                    borderRadius:
+                                        BorderRadius.circular(6),
+                                  ),
+                                  child: Center(
+                                    child: _buildBrandWidget(
+                                        item.entry.title, brandColor),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.entry.title,
+                                        style: AppTextStyles.label
+                                            .copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        item.entry.title,
+                                        style: AppTextStyles.caption
+                                            .copyWith(fontSize: 9),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                   ),
                 ),
                 const SizedBox(height: 20),
