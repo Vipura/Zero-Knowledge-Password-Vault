@@ -724,6 +724,45 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// Right panel showing password list (wide layout only).
   Widget _buildRightPanel() {
+    return Container(
+      color: AppColors.background,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Passwords',
+              style: AppTextStyles.heading3.copyWith(fontSize: 16),
+            ),
+          ),
+          Expanded(
+            child: _decryptedEntries.isEmpty
+                ? Center(
+                    child: Text('No entries',
+                        style: AppTextStyles.caption),
+                  )
+                : ListView.builder(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: _decryptedEntries.length,
+                    itemBuilder: (context, index) {
+                      final item = _decryptedEntries[index];
+                      final brandColor =
+                          AppIconMapper.getBrandColor(item.entry.title);
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Border.all(color: AppColors.surfaceBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                   ),
                 ),
                 const SizedBox(height: 20),
