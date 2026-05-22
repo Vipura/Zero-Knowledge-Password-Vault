@@ -685,6 +685,45 @@ class _HomeScreenState extends State<HomeScreen>
                   style: AppTextStyles.heading3.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _buildZkChip('Your Local'),
+                    const SizedBox(width: 8),
+                    _buildZkChip('Local Key'),
+                    const SizedBox(width: 8),
+                    _buildZkChip('Encrypted\nData Flow'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildZkChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.primary,
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  /// Right panel showing password list (wide layout only).
+  Widget _buildRightPanel() {
                   ),
                 ),
                 const SizedBox(height: 20),
