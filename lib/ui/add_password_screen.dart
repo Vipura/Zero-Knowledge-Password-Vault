@@ -66,6 +66,10 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
             content: Text(
               'Warning: This password is weak! Consider generating a stronger one.',
               style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.warning.withValues(alpha: 0.9),
+            duration: const Duration(seconds: 3),
+          ),
         );
       }
     }
@@ -89,26 +93,42 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
     } else {
       await _databaseService.update(entry);
     }
-    
+
     if (mounted) {
-      Navigator.pop(context, true); // True implies successful save/edit
+      Navigator.pop(context, true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final brandColor = AppIconMapper.getBrandColor(_currentTitle);
+
     return Scaffold(
-      appBar: AppBar(title: Text(widget.entryToEdit == null ? 'Add Password' : 'Edit Vault Entry')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        title: Text(
+          widget.entryToEdit == null ? 'Add Password' : 'Edit Vault Entry',
+          style: AppTextStyles.heading3,
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Icon(AppIconMapper.getIconFor(_currentTitle), size: 40),
-            ),
-            const SizedBox(height: 24),
+            // Icon preview
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: brandColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
             Autocomplete<String>(
               optionsBuilder: (TextEditingValue textEditingValue) {
                 if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
