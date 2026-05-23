@@ -837,16 +837,15 @@ class _HomeScreenState extends State<HomeScreen>
                       );
                     },
                   ),
-            MaterialPageRoute(
-              builder: (context) => AddPasswordScreen(sessionManager: widget.sessionManager),
-            ),
-          );
-          if (result == true) {
-            _loadAndDecryptEntries();
-          }
-        },
-        child: const Icon(Icons.add),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _SidebarItem {
+  final IconData icon;
+  final String label;
+  _SidebarItem(this.icon, this.label);
 }

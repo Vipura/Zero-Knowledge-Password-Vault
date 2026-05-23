@@ -6,14 +6,19 @@ import '../services/password_generator.dart';
 import '../services/password_analyzer.dart';
 import '../models/password_entry.dart';
 import '../utils/app_icons.dart';
+import '../utils/app_theme.dart';
 import '../main.dart';
 
 class AddPasswordScreen extends StatefulWidget {
   final SessionManager sessionManager;
   final PasswordEntry? entryToEdit;
   final String? initialPlaintext;
-  
-  const AddPasswordScreen({super.key, required this.sessionManager, this.entryToEdit, this.initialPlaintext});
+
+  const AddPasswordScreen(
+      {super.key,
+      required this.sessionManager,
+      this.entryToEdit,
+      this.initialPlaintext});
 
   @override
   State<AddPasswordScreen> createState() => _AddPasswordScreenState();
@@ -50,16 +55,17 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
   }
 
   void _save() async {
-    if (_titleController.text.isEmpty || _passwordController.text.isEmpty) return;
+    if (_titleController.text.isEmpty || _passwordController.text.isEmpty) {
+      return;
+    }
 
     if (PasswordAnalyzer.isWeak(_passwordController.text)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Warning: This password is weak! Consider Generating a stronger one.'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 3),
-          )
+          SnackBar(
+            content: Text(
+              'Warning: This password is weak! Consider generating a stronger one.',
+              style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
         );
       }
     }
