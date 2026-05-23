@@ -802,12 +802,41 @@ class _HomeScreenState extends State<HomeScreen>
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Username: ${item.entry.username}',
+                              style: AppTextStyles.caption
+                                  .copyWith(fontSize: 10),
+                            ),
+                            Text(
+                              'Password: ••••••••',
+                              style: AppTextStyles.caption
+                                  .copyWith(fontSize: 10),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                _buildCardAction(
+                                  icon: Icons.copy,
+                                  label: 'Copy',
+                                  color: AppColors.primary,
+                                  onTap: () =>
+                                      _copyPassword(item.plaintext),
+                                ),
+                                const SizedBox(width: 12),
+                                _buildCardAction(
+                                  icon: Icons.visibility,
+                                  label: 'Reveal',
+                                  color: AppColors.accent,
+                                  onTap: () {},
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _generateInfinitePassword,
-                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(45)),
                   child: const Text('Generate Password'),
                 ),
                 const SizedBox(height: 30),
