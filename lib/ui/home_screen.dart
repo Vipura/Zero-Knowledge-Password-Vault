@@ -837,45 +837,6 @@ class _HomeScreenState extends State<HomeScreen>
                       );
                     },
                   ),
-                  child: const Text('Generate Password'),
-                ),
-                const SizedBox(height: 30),
-                if (_generatedPassword.isNotEmpty) ...[
-                  const Text('Generated:', style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 8),
-                  SelectableText(
-                    _generatedPassword, 
-                    style: const TextStyle(fontSize: 18, fontFamily: 'monospace', color: Colors.greenAccent)
-                  ),
-                ]
-              ],
-            ),
-          ),
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : displayList.isEmpty
-              ? Center(child: Text(_showWeakOnly ? 'No weak passwords found!' : 'No passwords stored yet.'))
-              : ListView.builder(
-                  itemCount: displayList.length,
-                  itemBuilder: (context, index) {
-                    final item = displayList[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: item.isWeak ? Colors.orange.withOpacity(0.3) : Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(AppIconMapper.getIconFor(item.entry.title), color: item.isWeak ? Colors.orange : Colors.white),
-                      ),
-                      title: Text(item.entry.title),
-                      subtitle: Text(item.entry.username),
-                      onTap: () => _showItemDetails(item),
-                    );
-                  },
-                ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
             MaterialPageRoute(
               builder: (context) => AddPasswordScreen(sessionManager: widget.sessionManager),
             ),
