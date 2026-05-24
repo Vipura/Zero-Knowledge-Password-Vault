@@ -129,19 +129,50 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                 color: brandColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
+                    color: brandColor.withValues(alpha: 0.3), width: 1.5),
+              ),
+              child: Center(
+                child: _currentTitle.isEmpty
+                    ? const Icon(Icons.vpn_key,
+                        color: AppColors.textMuted, size: 36)
+                    : _buildIconPreview(brandColor),
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            // Title field with autocomplete
             Autocomplete<String>(
               optionsBuilder: (TextEditingValue textEditingValue) {
-                if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
+                if (textEditingValue.text.isEmpty) {
+                  return const Iterable<String>.empty();
+                }
                 return AppIconMapper.popularApps.where((String option) {
-                  return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                  return option
+                      .toLowerCase()
+                      .contains(textEditingValue.text.toLowerCase());
                 });
               },
               onSelected: (String selection) {
                 _titleController.text = selection;
                 setState(() => _currentTitle = selection);
               },
-              fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                // Ensure manual typing updates icon
+              optionsViewBuilder: (context, onSelected, options) {
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    elevation: 8,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        itemBuilder: (context, index) {
+                          final option = options.elementAt(index);
+                          return ListTile(
+                            dense: true,
                 if (controller.text != _titleController.text) {
                    controller.text = _titleController.text;
                 }
