@@ -227,26 +227,43 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                 Expanded(
                   child: TextField(
                     controller: _passwordController,
+                    style: AppTextStyles.body
+                        .copyWith(color: AppColors.textPrimary),
+                    decoration: AppDecorations.inputDecoration(
+                      hintText: 'Password',
+                      prefixIcon: Icons.lock_outline,
                       suffixIcon: IconButton(
-                        icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                        onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: AppColors.textMuted,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(
+                            () => _isPasswordVisible = !_isPasswordVisible),
                       ),
                     ),
                     obscureText: !_isPasswordVisible,
                   ),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.autorenew, size: 28),
-                  onPressed: _generatePassword,
-                  tooltip: 'Generate Secure Password',
+                const SizedBox(width: 10),
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.autorenew,
+                        color: AppColors.primary, size: 24),
+                    onPressed: _generatePassword,
+                    tooltip: 'Generate Secure Password',
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _save,
-              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
               child: Text(widget.entryToEdit == null ? 'Save Encrypted Entry' : 'Update Encrypted Entry'),
             ),
           ],
