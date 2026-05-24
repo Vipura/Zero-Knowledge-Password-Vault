@@ -173,35 +173,60 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                           final option = options.elementAt(index);
                           return ListTile(
                             dense: true,
+                            title: Text(option,
+                                style: AppTextStyles.body.copyWith(
+                                    color: AppColors.textPrimary)),
+                            onTap: () => onSelected(option),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+              fieldViewBuilder:
+                  (context, controller, focusNode, onFieldSubmitted) {
                 if (controller.text != _titleController.text) {
-                   controller.text = _titleController.text;
+                  controller.text = _titleController.text;
                 }
                 controller.addListener(() {
                   _titleController.text = controller.text;
                   setState(() => _currentTitle = controller.text);
                 });
-                
+
                 return TextField(
                   controller: controller,
                   focusNode: focusNode,
-                  decoration: const InputDecoration(labelText: 'Title / Website App', border: OutlineInputBorder()),
+                  style: AppTextStyles.body
+                      .copyWith(color: AppColors.textPrimary),
+                  decoration: AppDecorations.inputDecoration(
+                    hintText: 'Title / Website App',
+                    prefixIcon: Icons.web,
+                  ),
                 );
               },
             ),
             const SizedBox(height: 16),
+
+            // Username field
             TextField(
               controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Username', border: OutlineInputBorder()),
+              style:
+                  AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+              decoration: AppDecorations.inputDecoration(
+                hintText: 'Username',
+                prefixIcon: Icons.person_outline,
+              ),
             ),
             const SizedBox(height: 16),
+
+            // Password field with generate button
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: TextField(
                     controller: _passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
                         onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
