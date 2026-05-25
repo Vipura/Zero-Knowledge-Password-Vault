@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:cryptography/cryptography.dart';
 import '../services/crypto_service.dart';
 import '../services/database_service.dart';
+import '../utils/app_theme.dart';
 import '../main.dart';
 
 class SetupPasswordScreen extends StatefulWidget {
@@ -17,27 +17,36 @@ class _SetupPasswordScreenState extends State<SetupPasswordScreen> {
   final _confirmController = TextEditingController();
   final _cryptoService = CryptoService();
   bool _isLoading = false;
+  bool _obscure1 = true;
+  bool _obscure2 = true;
 
   void _setup() async {
-    if (_passwordController.text.isEmpty || _confirmController.text.isEmpty) return;
-    if (_passwordController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match!')));
+    if (_passwordController.text.isEmpty || _confirmController.text.isEmpty) {
       return;
     }
-    
+    if (_passwordController.text != _confirmController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Passwords do not match!',
+              style:
+                  AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
+          backgroundColor: AppColors.error.withValues(alpha: 0.9),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
       final dbService = DatabaseService.instance;
       final storedSalt = _cryptoService.generateSalt();
       await dbService.saveSalt(storedSalt);
-      final derivedKey = await _cryptoService.deriveKey(_passwordController.text, storedSalt);
-      
-      final verificationBox = await _cryptoService.encryptPassword("ZK_VAULT_VALID", derivedKey);
-      await dbService.saveConfig('verify_ciphertext', base64Encode(verificationBox.cipherText));
-      await dbService.saveConfig('verify_nonce', base64Encode(verificationBox.nonce));
-      await dbService.saveConfig('verify_mac', base64Encode(verificationBox.mac.bytes));
-      
+      final derivedKey = await _cryptoService.deriveKey(
+          _passwordController.text, storedSalt);
+
+      final verificationBox =
+          await _cryptoService.encryptPassword("ZK_VAULT_VALID", derivedKey);
       // Since it's zero-knowledge we can just replace the whole app with main state
       if (mounted) {
          Navigator.pushAndRemoveUntil(

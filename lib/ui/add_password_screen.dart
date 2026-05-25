@@ -308,4 +308,10 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
     }
     return Text(
       AppIconMapper.getInitial(_currentTitle),
+      style: AppTextStyles.heading1.copyWith(
+        color: brandColor,
+        fontSize: 32,
+      ),
+    );
+  }
 }
