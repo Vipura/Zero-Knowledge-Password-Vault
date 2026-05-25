@@ -264,11 +264,48 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                 ),
               ],
             ),
-              child: Text(widget.entryToEdit == null ? 'Save Encrypted Entry' : 'Update Encrypted Entry'),
+            const SizedBox(height: 36),
+
+            // Save button
+            SizedBox(
+              width: double.infinity,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: AppColors.cyanGradient,
+                ),
+                child: ElevatedButton(
+                  onPressed: _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: Text(
+                    widget.entryToEdit == null
+                        ? 'Save Encrypted Entry'
+                        : 'Update Encrypted Entry',
+                    style: AppTextStyles.button.copyWith(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildIconPreview(Color brandColor) {
+    final icon = AppIconMapper.getIconFor(_currentTitle);
+    if (icon != Icons.vpn_key) {
+      return Icon(icon, color: brandColor, size: 36);
+    }
+    return Text(
+      AppIconMapper.getInitial(_currentTitle),
 }
