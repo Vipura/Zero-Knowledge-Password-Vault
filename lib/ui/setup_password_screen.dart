@@ -47,12 +47,20 @@ class _SetupPasswordScreenState extends State<SetupPasswordScreen> {
 
       final verificationBox =
           await _cryptoService.encryptPassword("ZK_VAULT_VALID", derivedKey);
+      await dbService.saveConfig(
+          'verify_ciphertext', base64Encode(verificationBox.cipherText));
+      await dbService.saveConfig(
+          'verify_nonce', base64Encode(verificationBox.nonce));
+      await dbService.saveConfig(
+          'verify_mac', base64Encode(verificationBox.mac.bytes));
+
       // Since it's zero-knowledge we can just replace the whole app with main state
       if (mounted) {
-         Navigator.pushAndRemoveUntil(
-          context, 
-          MaterialPageRoute(builder: (context) => const PasswordVaultApp(isSetup: true)), 
-          (r) => false
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const PasswordVaultApp(isSetup: true)),
+          (r) => false,
         );
       }
     } finally {
@@ -63,14 +71,31 @@ class _SetupPasswordScreenState extends State<SetupPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Setup Vault')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        title: Text('Setup Vault', style: AppTextStyles.heading3),
+      ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Create your Master Password.', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              // Shield icon
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3)),
+                ),
+                child: const Icon(Icons.shield,
+                    color: AppColors.primary, size: 48),
+              ),
+              const SizedBox(height: 24),
               const SizedBox(height: 8),
               const Text('Make sure to remember it. If you forget it, you will permanently lose access to your local vault.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 40),
