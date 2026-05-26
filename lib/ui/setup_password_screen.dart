@@ -138,15 +138,38 @@ class _SetupPasswordScreenState extends State<SetupPasswordScreen> {
                 style: AppTextStyles.body
                     .copyWith(color: AppColors.textPrimary),
                 decoration: AppDecorations.inputDecoration(
-              ),
-              const SizedBox(height: 32),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _setup,
-                      style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(55)),
-                      child: const Text('Create Master Password'),
+                  hintText: 'Confirm Master Password',
+                  prefixIcon: Icons.lock_outline,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscure2
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: AppColors.textMuted,
+                      size: 20,
                     ),
+                    onPressed: () =>
+                        setState(() => _obscure2 = !_obscure2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 36),
+              // Create button
+              SizedBox(
+                width: double.infinity,
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                            color: AppColors.primary))
+                    : Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          gradient: AppColors.cyanGradient,
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _setup,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
             ],
           ),
         ),
