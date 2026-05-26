@@ -96,19 +96,48 @@ class _SetupPasswordScreenState extends State<SetupPasswordScreen> {
                     color: AppColors.primary, size: 48),
               ),
               const SizedBox(height: 24),
+              Text(
+                'Create your Master Password',
+                style: AppTextStyles.heading2.copyWith(fontSize: 22),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 8),
-              const Text('Make sure to remember it. If you forget it, you will permanently lose access to your local vault.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+              Text(
+                'Make sure to remember it. If you forget it, you will permanently lose access to your local vault.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body,
+              ),
               const SizedBox(height: 40),
+              // Master Password
               TextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Master Password', border: OutlineInputBorder()),
+                obscureText: _obscure1,
+                style: AppTextStyles.body
+                    .copyWith(color: AppColors.textPrimary),
+                decoration: AppDecorations.inputDecoration(
+                  hintText: 'Master Password',
+                  prefixIcon: Icons.lock_outline,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscure1
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: AppColors.textMuted,
+                      size: 20,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscure1 = !_obscure1),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
+              // Confirm Password
               TextField(
                 controller: _confirmController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Confirm Master Password', border: OutlineInputBorder()),
+                obscureText: _obscure2,
+                style: AppTextStyles.body
+                    .copyWith(color: AppColors.textPrimary),
+                decoration: AppDecorations.inputDecoration(
               ),
               const SizedBox(height: 32),
               _isLoading
