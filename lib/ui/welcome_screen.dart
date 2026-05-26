@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_theme.dart';
 import 'setup_password_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -7,16 +8,28 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 36.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.shield_moon, size: 100, color: Colors.deepPurpleAccent),
-              const SizedBox(height: 24),
-              const Text('Welcome to Password Vault', 
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              // Shield icon
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  border:
+                      Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),

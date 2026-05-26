@@ -170,6 +170,22 @@ class _SetupPasswordScreenState extends State<SetupPasswordScreen> {
                           onPressed: _setup,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: Text(
+                            'Create Master Password',
+                            style: AppTextStyles.button.copyWith(
+                              color: AppColors.textPrimary,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
             ],
           ),
         ),
