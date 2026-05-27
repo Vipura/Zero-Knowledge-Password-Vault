@@ -30,25 +30,40 @@ class WelcomeScreen extends StatelessWidget {
                       spreadRadius: 5,
                     ),
                   ],
+                ),
+                child: const Icon(Icons.shield_moon,
+                    size: 64, color: AppColors.primary),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Welcome to\nZero Vault',
+                style: AppTextStyles.heading1.copyWith(
+                  fontSize: 30,
+                  height: 1.2,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'A completely offline, Zero-Knowledge secure vault for your credentials.\nWe never know your master password or have access to your data.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: AppTextStyles.body.copyWith(fontSize: 14, height: 1.5),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context, 
-                    MaterialPageRoute(builder: (context) => const SetupPasswordScreen())
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(55),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              SizedBox(
+                width: double.infinity,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: AppColors.cyanGradient,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const SetupPasswordScreen()),
                 ),
                 child: const Text("Let's Get Started", style: TextStyle(fontSize: 18)),
               ),
