@@ -64,8 +64,24 @@ class WelcomeScreen extends StatelessWidget {
                         MaterialPageRoute(
                             builder: (context) =>
                                 const SetupPasswordScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      minimumSize: const Size.fromHeight(55),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(
+                      "Let's Get Started",
+                      style: AppTextStyles.button.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: 17,
+                      ),
+                    ),
+                  ),
                 ),
-                child: const Text("Let's Get Started", style: TextStyle(fontSize: 18)),
               ),
             ],
           ),

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cryptography/cryptography.dart';
+import 'ui/splash_screen.dart';
 import 'ui/welcome_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/home_screen.dart';
 import 'services/database_service.dart';
+import 'utils/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,8 +51,10 @@ class PasswordVaultApp extends StatefulWidget {
   State<PasswordVaultApp> createState() => _PasswordVaultAppState();
 }
 
-class _PasswordVaultAppState extends State<PasswordVaultApp> with WidgetsBindingObserver {
+class _PasswordVaultAppState extends State<PasswordVaultApp>
+    with WidgetsBindingObserver {
   final SessionManager _sessionManager = SessionManager();
+  bool _showSplash = true;
 
   @override
   void initState() {
@@ -66,11 +70,16 @@ class _PasswordVaultAppState extends State<PasswordVaultApp> with WidgetsBinding
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
       _sessionManager.onBackground();
     } else if (state == AppLifecycleState.resumed) {
       _sessionManager.onForeground();
     }
+  }
+
+  void _onSplashComplete() {
+    setState(() => _showSplash = false);
   }
 
   @override
@@ -79,14 +88,6 @@ class _PasswordVaultAppState extends State<PasswordVaultApp> with WidgetsBinding
       listenable: _sessionManager,
       builder: (context, child) {
         return MaterialApp(
-          title: 'Password Vault',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.dark),
-            useMaterial3: true,
-          ),
-          home: _sessionManager.isLocked
-              ? (widget.isSetup ? LoginScreen(sessionManager: _sessionManager) : const WelcomeScreen())
-              : HomeScreen(sessionManager: _sessionManager),
         );
       },
     );
