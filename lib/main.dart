@@ -88,6 +88,16 @@ class _PasswordVaultAppState extends State<PasswordVaultApp>
       listenable: _sessionManager,
       builder: (context, child) {
         return MaterialApp(
+          title: 'Zero Vault',
+          debugShowCheckedModeBanner: false,
+          theme: AppDecorations.buildTheme(),
+          home: _showSplash
+              ? SplashScreen(onComplete: _onSplashComplete)
+              : _sessionManager.isLocked
+                  ? (widget.isSetup
+                      ? LoginScreen(sessionManager: _sessionManager)
+                      : const WelcomeScreen())
+                  : HomeScreen(sessionManager: _sessionManager),
         );
       },
     );
