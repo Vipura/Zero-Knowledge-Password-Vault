@@ -480,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildTopBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.background,
         border: Border(
@@ -488,27 +488,45 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       child: Row(
         children: [
+          // ── Search field — expands to fill available width ──────────────
           Expanded(
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.surfaceBorder),
-              ),
-              child: TextField(
-                onChanged: (v) => setState(() => _searchQuery = v),
-                style: AppTextStyles.body
-                    .copyWith(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  hintText: 'Search vault…',
-                  hintStyle: AppTextStyles.body
-                      .copyWith(color: AppColors.textMuted),
-                  prefixIcon: const Icon(Icons.search,
-                      color: AppColors.textMuted, size: 18),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+            child: TextField(
+              onChanged: (v) => setState(() => _searchQuery = v),
+              style: AppTextStyles.body
+                  .copyWith(color: AppColors.textPrimary, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Search vault…',
+                hintStyle: AppTextStyles.body
+                    .copyWith(color: AppColors.textMuted, fontSize: 14),
+                prefixIcon: const Icon(Icons.search,
+                    color: AppColors.textMuted, size: 20),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close,
+                            color: AppColors.textMuted, size: 18),
+                        onPressed: () {
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppColors.surface,
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 13),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: AppColors.surfaceBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: AppColors.surfaceBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                      color: AppColors.primary, width: 1.5),
                 ),
               ),
             ),
@@ -554,12 +572,14 @@ class _HomeScreenState extends State<HomeScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.add, color: AppColors.primary, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              'Add New Entry',
-              style: AppTextStyles.label.copyWith(
-                  color: AppColors.textPrimary, fontSize: 12),
-            ),
+            if (MediaQuery.of(context).size.width > 500) ...[
+              const SizedBox(width: 6),
+              Text(
+                'Add New Entry',
+                style: AppTextStyles.label.copyWith(
+                    color: AppColors.textPrimary, fontSize: 12),
+              ),
+            ],
           ],
         ),
       ),
@@ -784,33 +804,51 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Favicon widget (cached) ────────────────────────────────────────────────
 
+
+  /// Normalises a service name to its most likely domain.
+  static String _titleToDomain(String title) {
+    final lower = title.toLowerCase().trim().replaceAll(' ', '');
+    return '$lower.com';
+  }
+
   Widget _buildFaviconWidget(String title, Color brandColor, double size) {
-    final domain = '${title.toLowerCase().replaceAll(' ', '')}.com';
-    final faviconUrl = 'https://icons.duckduckgo.com/ip3/$domain.ico';
+    final domain = _titleToDomain(title);
+    // Clearbit returns high-res 128x128 PNG logos
+    final clearbitUrl = 'https://logo.clearbit.com/$domain';
+    // DuckDuckGo .ico is a reliable secondary fallback
+    final ddgUrl = 'https://icons.duckduckgo.com/ip3/$domain.ico';
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(size * 0.22),
       child: CachedNetworkImage(
-        imageUrl: faviconUrl,
+        imageUrl: clearbitUrl,
         width: size,
         height: size,
         fit: BoxFit.cover,
-        // Error: show initial letter with brand colour
-        errorWidget: (_, _, _) => _buildInitialWidget(
-            title, brandColor, size),
-        // Placeholder: shimmer-like grey box
-        placeholder: (_, _) => Container(
+        placeholder: (_, _) => _buildShimmerBox(size),
+        // Clearbit failed -> try DuckDuckGo
+        errorWidget: (_, _, _) => CachedNetworkImage(
+          imageUrl: ddgUrl,
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceBorder,
-            borderRadius: BorderRadius.circular(size * 0.22),
-          ),
+          fit: BoxFit.cover,
+          placeholder: (_, _) => _buildShimmerBox(size),
+          // Both failed -> branded initial / icon
+          errorWidget: (_, _, _) =>
+              _buildInitialWidget(title, brandColor, size),
         ),
       ),
     );
   }
 
+  Widget _buildShimmerBox(double size) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceBorder,
+          borderRadius: BorderRadius.circular(size * 0.22),
+        ),
+      );
   Widget _buildInitialWidget(String title, Color brandColor, double size) {
     final icon = AppIconMapper.getIconFor(title);
     return Container(

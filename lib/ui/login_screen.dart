@@ -20,10 +20,15 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
   final _cryptoService = CryptoService();
   final _biometricService = BiometricService();
+
   bool _isLoading = false;
   bool _isBiometricLoading = false;
   bool _obscurePassword = true;
+
+  // Whether the device has biometrics available
   bool _biometricAvailable = false;
+  // Whether a saved key is already stored (biometric unlock ready)
+  bool _biometricReady = false;
 
   late AnimationController _animController;
   late AnimationController _biometricPulseController;
@@ -48,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen>
     _slideUp = Tween<double>(begin: 30, end: 0).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
     );
-    _biometricPulse = Tween<double>(begin: 0.85, end: 1.0).animate(
+    _biometricPulse = Tween<double>(begin: 0.88, end: 1.0).animate(
       CurvedAnimation(
           parent: _biometricPulseController, curve: Curves.easeInOut),
     );
@@ -65,115 +70,180 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  // ── Biometric availability ─────────────────────────────────────────────────
+
   Future<void> _checkBiometrics() async {
     final available = await _biometricService.isBiometricAvailable();
-    if (mounted) setState(() => _biometricAvailable = available);
+    final ready = available && await _biometricService.hasSavedKey();
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _biometricReady = ready;
+      });
+
+      // If biometric is ready, auto-prompt after a short delay
+      if (ready) {
+        await Future.delayed(const Duration(milliseconds: 600));
+        if (mounted) _unlockWithBiometrics();
+      }
+    }
   }
 
+  // ── Master password unlock ─────────────────────────────────────────────────
+
   Future<void> _unlock() async {
-    if (_passwordController.text.isEmpty) return;
+    final password = _passwordController.text.trim();
+    if (password.isEmpty) return;
     setState(() => _isLoading = true);
 
     try {
       final dbService = DatabaseService.instance;
       final storedSalt = await dbService.getSalt();
+      if (storedSalt == null) return;
 
-      if (storedSalt != null) {
-        final derivedKey = await _cryptoService.deriveKey(
-            _passwordController.text, storedSalt);
+      final derivedKey =
+          await _cryptoService.deriveKey(password, storedSalt);
 
-        final ciphertext = await dbService.getConfig('verify_ciphertext');
-        final nonce = await dbService.getConfig('verify_nonce');
-        final mac = await dbService.getConfig('verify_mac');
+      final ciphertext = await dbService.getConfig('verify_ciphertext');
+      final nonce = await dbService.getConfig('verify_nonce');
+      final mac = await dbService.getConfig('verify_mac');
 
-        if (ciphertext != null && nonce != null && mac != null) {
-          final box = SecretBox(
-            base64Decode(ciphertext),
-            nonce: base64Decode(nonce),
-            mac: Mac(base64Decode(mac)),
-          );
+      if (ciphertext == null || nonce == null || mac == null) return;
 
-          try {
-            final verifyText =
-                await _cryptoService.decryptPassword(box, derivedKey);
-            if (verifyText == 'ZK_VAULT_VALID') {
-              widget.sessionManager.unlock(derivedKey);
-            } else {
-              throw Exception('Invalid password validation payload.');
-            }
-          } catch (_) {
-            if (mounted) {
-              _showError('Incorrect Master Password!');
-            }
-          }
+      final box = SecretBox(
+        base64Decode(ciphertext),
+        nonce: base64Decode(nonce),
+        mac: Mac(base64Decode(mac)),
+      );
+
+      try {
+        final verifyText =
+            await _cryptoService.decryptPassword(box, derivedKey);
+        if (verifyText != 'ZK_VAULT_VALID') {
+          throw Exception('Bad payload');
         }
+
+        // ✅ Password correct — save key bytes for future biometric unlocks
+        final keyBytes = await derivedKey.extractBytes();
+        if (_biometricAvailable) {
+          await _biometricService.saveKeyForBiometric(keyBytes);
+          if (mounted) setState(() => _biometricReady = true);
+        }
+
+        // Unlock the session
+        widget.sessionManager.unlock(derivedKey);
+      } on Exception {
+        if (mounted) _showError('Incorrect Master Password. Try again.');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _unlockWithBiometrics() async {
-    // Biometric is a gate — vault must have been set up and
-    // the key is re-derived after bio success for security.
-    // For this session pattern: if no key in memory, we use
-    // biometrics + stored verify to re-authenticate.
+  // ── Biometric unlock ───────────────────────────────────────────────────────
 
+  /// Full biometric unlock flow:
+  /// 1. Biometric OS prompt shown
+  /// 2. On success, encrypted key bytes are read from secure storage
+  /// 3. SecretKey is reconstructed and used to unlock the session directly
+  Future<void> _unlockWithBiometrics() async {
     if (!_biometricAvailable) return;
     setState(() => _isBiometricLoading = true);
 
     try {
-      final authenticated =
-          await _biometricService.authenticateWithBiometrics();
-      if (!authenticated || !mounted) return;
+      // loadKeyWithBiometric handles both the biometric prompt AND key retrieval
+      final keyBytes = await _biometricService.loadKeyWithBiometric();
 
-      // Biometric success — prompt user to also enter master password
-      // OR if master password was already cached this session, unlock directly.
-      // Show an informative snackbar guiding the user.
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.fingerprint, color: AppColors.primary, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Biometric verified! Enter your Master Password to complete unlock.',
-                  style: AppTextStyles.caption
-                      .copyWith(color: AppColors.textPrimary),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.surface,
-          duration: const Duration(seconds: 3),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-          behavior: SnackBarBehavior.floating,
-        ),
+      if (keyBytes == null) {
+        if (mounted) {
+          _showInfo(
+              'Biometric failed or no saved key. Enter your Master Password.');
+        }
+        return;
+      }
+
+      // Reconstruct the SecretKey from the stored bytes
+      final alg = AesGcm.with256bits();
+      final derivedKey = await alg.newSecretKeyFromBytes(keyBytes);
+
+      // Verify the key is valid against the stored ciphertext
+      final dbService = DatabaseService.instance;
+      final ciphertext = await dbService.getConfig('verify_ciphertext');
+      final nonce = await dbService.getConfig('verify_nonce');
+      final mac = await dbService.getConfig('verify_mac');
+
+      if (ciphertext == null || nonce == null || mac == null) {
+        if (mounted) _showError('Vault not set up. Please use Master Password.');
+        return;
+      }
+
+      final box = SecretBox(
+        base64Decode(ciphertext),
+        nonce: base64Decode(nonce),
+        mac: Mac(base64Decode(mac)),
       );
 
-      // Focus the password field for fast entry after bio success
-      FocusScope.of(context).requestFocus(FocusNode());
+      try {
+        final verifyText =
+            await _cryptoService.decryptPassword(box, derivedKey);
+        if (verifyText != 'ZK_VAULT_VALID') throw Exception('Bad payload');
+
+        // ✅ Biometric + key verification successful — unlock session
+        if (mounted) widget.sessionManager.unlock(derivedKey);
+      } on Exception {
+        // Stored key no longer valid (e.g. master password changed)
+        await _biometricService.clearSavedKey();
+        if (mounted) {
+          setState(() => _biometricReady = false);
+          _showError(
+              'Saved key is invalid. Please re-authenticate with your Master Password.');
+        }
+      }
     } finally {
       if (mounted) setState(() => _isBiometricLoading = false);
     }
   }
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
   void _showError(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
-        ),
-        backgroundColor: AppColors.error.withValues(alpha: 0.9),
+        content: Text(message,
+            style: AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
+        backgroundColor: AppColors.error.withValues(alpha: 0.92),
         behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
+
+  void _showInfo(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.info_outline,
+                color: AppColors.primary, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(message,
+                  style: AppTextStyles.caption
+                      .copyWith(color: AppColors.textPrimary)),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.surface,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen>
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Subtle background glow
+          // Background ambient glows
           Positioned(
             top: -80,
             left: -60,
@@ -190,12 +260,10 @@ class _LoginScreenState extends State<LoginScreen>
               height: 280,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.08),
-                    Colors.transparent,
-                  ],
-                ),
+                gradient: RadialGradient(colors: [
+                  AppColors.primary.withValues(alpha: 0.08),
+                  Colors.transparent,
+                ]),
               ),
             ),
           ),
@@ -207,25 +275,22 @@ class _LoginScreenState extends State<LoginScreen>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.accent.withValues(alpha: 0.06),
-                    Colors.transparent,
-                  ],
-                ),
+                gradient: RadialGradient(colors: [
+                  AppColors.accent.withValues(alpha: 0.06),
+                  Colors.transparent,
+                ]),
               ),
             ),
           ),
+
           // Main content
           SafeArea(
             child: FadeTransition(
               opacity: _fadeIn,
               child: AnimatedBuilder(
                 animation: _slideUp,
-                builder: (context, child) => Transform.translate(
-                  offset: Offset(0, _slideUp.value),
-                  child: child,
-                ),
+                builder: (_, child) =>
+                    Transform.translate(offset: Offset(0, _slideUp.value), child: child),
                 child: Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -233,136 +298,21 @@ class _LoginScreenState extends State<LoginScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 48),
-
-                        // Shield logo
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                AppColors.primary.withValues(alpha: 0.15),
-                                Colors.transparent,
-                              ],
-                            ),
-                            border: Border.all(
-                              color:
-                                  AppColors.primary.withValues(alpha: 0.3),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.shield,
-                            color: AppColors.primary,
-                            size: 36,
-                          ),
-                        ),
+                        _buildShieldLogo(),
                         const SizedBox(height: 24),
-
-                        // Title
-                        Text(
-                          'UNLOCK YOUR VAULT',
-                          style: AppTextStyles.heading2.copyWith(
-                            letterSpacing: 2.5,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Zero-Knowledge · Local-First · Encrypted',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.primary.withValues(alpha: 0.8),
-                            letterSpacing: 0.5,
-                            fontSize: 10,
-                          ),
-                        ),
+                        _buildTitle(),
                         const SizedBox(height: 40),
-
-                        // Master Password field (only field — no email)
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          style: AppTextStyles.body
-                              .copyWith(color: AppColors.textPrimary),
-                          decoration: AppDecorations.inputDecoration(
-                            hintText: 'Master Password',
-                            prefixIcon: Icons.lock_outline,
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: AppColors.textMuted,
-                                size: 20,
-                              ),
-                              onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword),
-                            ),
-                          ),
-                          onSubmitted: (_) => _unlock(),
-                        ),
+                        _buildPasswordField(),
                         const SizedBox(height: 10),
-
-                        // Helper text
-                        Text(
-                          'Your Master Password is your local decryption key.\nIt never leaves this device.',
-                          style: AppTextStyles.caption,
-                          textAlign: TextAlign.center,
-                        ),
+                        _buildPasswordHint(),
                         const SizedBox(height: 28),
-
-                        // Unlock button
-                        SizedBox(
-                          width: double.infinity,
-                          child: _isLoading
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                      color: AppColors.primary))
-                              : _buildUnlockButton(),
-                        ),
-                        const SizedBox(height: 36),
-
-                        // Biometric section
+                        _buildUnlockButton(),
+                        const SizedBox(height: 32),
                         _buildBiometricSection(),
                         const SizedBox(height: 32),
-
-                        // Divider
-                        Row(children: [
-                          Expanded(
-                              child: Divider(
-                                  color: AppColors.surfaceBorder)),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text('OR',
-                                style: AppTextStyles.caption.copyWith(
-                                    fontSize: 10,
-                                    letterSpacing: 1.2)),
-                          ),
-                          Expanded(
-                              child: Divider(
-                                  color: AppColors.surfaceBorder)),
-                        ]),
+                        _buildDivider(),
                         const SizedBox(height: 20),
-
-                        // Forgot password
-                        Column(
-                          children: [
-                            Text(
-                              'Forgot Master Password?',
-                              style: AppTextStyles.label.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'A forgotten master password cannot be recovered.\nThis is the guarantee of zero-knowledge encryption.',
-                              style: AppTextStyles.caption,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
+                        _buildForgotPasswordNote(),
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -376,88 +326,175 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildUnlockButton() {
+  Widget _buildShieldLogo() {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF8B5CF6)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            spreadRadius: -4,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: [
+          AppColors.primary.withValues(alpha: 0.15),
+          Colors.transparent,
+        ]),
+        border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: _unlock,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.lock_open,
-                      color: Colors.white, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Unlock Vault',
-                    style: AppTextStyles.button.copyWith(
-                      color: Colors.white,
-                      fontSize: 16,
-                      letterSpacing: 0.5,
-                    ),
+      child:
+          const Icon(Icons.shield, color: AppColors.primary, size: 36),
+    );
+  }
+
+  Widget _buildTitle() {
+    return Column(
+      children: [
+        Text(
+          'UNLOCK YOUR VAULT',
+          style: AppTextStyles.heading2
+              .copyWith(letterSpacing: 2.5, fontSize: 20),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Zero-Knowledge · Local-First · Encrypted',
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.primary.withValues(alpha: 0.8),
+            letterSpacing: 0.5,
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextField(
+      controller: _passwordController,
+      obscureText: _obscurePassword,
+      style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+      decoration: AppDecorations.inputDecoration(
+        hintText: 'Master Password',
+        prefixIcon: Icons.lock_outline,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            color: AppColors.textMuted,
+            size: 20,
+          ),
+          onPressed: () =>
+              setState(() => _obscurePassword = !_obscurePassword),
+        ),
+      ),
+      onSubmitted: (_) => _unlock(),
+    );
+  }
+
+  Widget _buildPasswordHint() {
+    return Text(
+      'Your Master Password is your local decryption key.\nIt never leaves this device.',
+      style: AppTextStyles.caption,
+      textAlign: TextAlign.center,
+    );
+  }
+
+  Widget _buildUnlockButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary))
+          : Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, Color(0xFF8B5CF6)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    spreadRadius: -4,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: _unlock,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.lock_open,
+                            color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Unlock Vault',
+                          style: AppTextStyles.button.copyWith(
+                            color: Colors.white,
+                            fontSize: 16,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
   Widget _buildBiometricSection() {
+    // Label changes based on setup state
+    final String statusLabel;
+    final String statusSub;
+    if (!_biometricAvailable) {
+      statusLabel = 'Biometric Unavailable';
+      statusSub = 'Not supported on this device';
+    } else if (_biometricReady) {
+      statusLabel = 'Biometric Unlock';
+      statusSub = 'Tap to unlock instantly';
+    } else {
+      statusLabel = 'Biometric Unlock';
+      statusSub = 'Unlock once with password to enable';
+    }
+
     return Column(
       children: [
-        // Biometric button
         GestureDetector(
-          onTap: _biometricAvailable ? _unlockWithBiometrics : null,
+          onTap:
+              (_biometricAvailable && _biometricReady) ? _unlockWithBiometrics : null,
           child: AnimatedBuilder(
             animation: _biometricPulse,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _biometricAvailable ? _biometricPulse.value : 1.0,
-                child: child,
-              );
-            },
+            builder: (_, child) => Transform.scale(
+              scale: (_biometricAvailable && _biometricReady)
+                  ? _biometricPulse.value
+                  : 1.0,
+              child: child,
+            ),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: _biometricAvailable
-                      ? AppColors.primary.withValues(alpha: 0.6)
+                  color: _biometricReady
+                      ? AppColors.primary.withValues(alpha: 0.65)
                       : AppColors.surfaceBorder,
                   width: 1.5,
                 ),
-                color: _biometricAvailable
+                color: _biometricReady
                     ? AppColors.primary.withValues(alpha: 0.08)
                     : AppColors.surface,
-                boxShadow: _biometricAvailable
+                boxShadow: _biometricReady
                     ? [
                         BoxShadow(
-                          color:
-                              AppColors.primary.withValues(alpha: 0.15),
-                          blurRadius: 20,
+                          color: AppColors.primary.withValues(alpha: 0.18),
+                          blurRadius: 24,
                           spreadRadius: 2,
                         )
                       ]
@@ -465,40 +502,69 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               child: _isBiometricLoading
                   ? const SizedBox(
-                      width: 32,
-                      height: 32,
+                      width: 36,
+                      height: 36,
                       child: CircularProgressIndicator(
                           color: AppColors.primary, strokeWidth: 2))
                   : Icon(
                       Icons.fingerprint,
                       color: _biometricAvailable
-                          ? AppColors.primary
-                          : AppColors.textMuted,
-                      size: 36,
+                          ? _biometricReady
+                              ? AppColors.primary
+                              : AppColors.textMuted
+                          : AppColors.surfaceBorder,
+                      size: 40,
                     ),
             ),
           ),
         ),
         const SizedBox(height: 10),
+        Text(statusLabel,
+            style: AppTextStyles.label.copyWith(
+              color: _biometricReady
+                  ? AppColors.textPrimary
+                  : AppColors.textMuted,
+              fontWeight: FontWeight.w600,
+            )),
+        const SizedBox(height: 2),
+        Text(statusSub,
+            style: AppTextStyles.caption.copyWith(
+              color: _biometricReady
+                  ? AppColors.textMuted
+                  : AppColors.surfaceBorder,
+            )),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Row(children: [
+      Expanded(child: Divider(color: AppColors.surfaceBorder)),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Text('OR',
+            style: AppTextStyles.caption
+                .copyWith(fontSize: 10, letterSpacing: 1.2)),
+      ),
+      Expanded(child: Divider(color: AppColors.surfaceBorder)),
+    ]);
+  }
+
+  Widget _buildForgotPasswordNote() {
+    return Column(
+      children: [
         Text(
-          'Biometric Unlock',
+          'Forgot Master Password?',
           style: AppTextStyles.label.copyWith(
-            color: _biometricAvailable
-                ? AppColors.textPrimary
-                : AppColors.textMuted,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
-          _biometricAvailable
-              ? 'Fingerprint & Face ID'
-              : 'Not available on this device',
-          style: AppTextStyles.caption.copyWith(
-            color: _biometricAvailable
-                ? AppColors.textMuted
-                : AppColors.surfaceBorder,
-          ),
+          'A forgotten master password cannot be recovered.\nThis is the guarantee of zero-knowledge encryption.',
+          style: AppTextStyles.caption,
+          textAlign: TextAlign.center,
         ),
       ],
     );
