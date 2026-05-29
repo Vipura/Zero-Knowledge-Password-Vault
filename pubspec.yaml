@@ -38,6 +38,8 @@ dependencies:
   path: ^1.9.1
   cryptography: ^2.9.0
   google_fonts: ^6.2.1
+  local_auth: ^2.3.0
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
